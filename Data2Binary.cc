@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 
         while (test >> var) {
 
-          if (var == "Channel" || var == "" || var == " ") break;
+          if (var == "Channel" || var.empty()) break;
           strncpy(reinterpret_cast<char *>(data), var.c_str(), sizeof(data));
 
           file.write(reinterpret_cast<char *>(data), sizeof(data));

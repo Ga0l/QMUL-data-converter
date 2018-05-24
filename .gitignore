@@ -2,3 +2,7 @@
 *.txt
 *.dat
 output
+
+## Exec
+Binary2TTree
+Data2Binary

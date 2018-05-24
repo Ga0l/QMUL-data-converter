@@ -1,11 +1,16 @@
 #include <iostream>
+#include <sstream>
 #include <fstream>
+#include <set>
+
 #include <TApplication.h>
 
-#include "convert.h"
+#include <convert.h>
 
 static void show_usage(std::string name);
 static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::string>& sources);
+static std::vector<std::string> splitpath( const std::string& str ,
+                                           const std::set<char> delimiters);
 
 int main(int argc, char *argv[]) {
 
@@ -36,32 +41,64 @@ int main(int argc, char *argv[]) {
     input_file.read((char*)&hCh,     sizeof(hCh));
     input_file.read((char*)&hEvt,    sizeof(hEvt));
 
-//    // Debug printouts
-//    std::cout << hGlobal.TestWord << std::endl
-//              << hGlobal.Version  << std::endl
-//              << hGlobal.InstID   << std::endl
-//              << hGlobal.NumCh    << std::endl
-//              << hGlobal.TimeStep << std::endl
-//              << hGlobal.SampRate << std::endl
-//              << hGlobal.reserved << std::endl;
-//    std::cout << hCh.TestWord     << std::endl
-//              << hCh.NumSamp      << std::endl
-//              << hCh.NumByteSamp  << std::endl
-//              << hCh.NumBitSamp   << std::endl
-//              << hCh.type         << std::endl
-//              << hCh.Yscale       << std::endl
-//              << hCh.Yoffset      << std::endl
-//              << hCh.reserved     << std::endl;
-//    std::cout << hEvt.TestWord    << std::endl
-//              << hEvt.unixtime    << std::endl
-//              << hEvt.reserved    << std::endl;
+    // Debug printouts
+    std::cout << hGlobal.TestWord << std::endl
+              << hGlobal.Version  << std::endl
+              << hGlobal.InstID   << std::endl
+              << hGlobal.NumCh    << std::endl
+              << hGlobal.TimeStep << std::endl
+              << hGlobal.SampRate << std::endl
+              << hGlobal.reserved << std::endl;
+    std::cout << hCh.TestWord     << std::endl
+              << hCh.NumSamp      << std::endl
+              << hCh.NumByteSamp  << std::endl
+              << hCh.NumBitSamp   << std::endl
+              << hCh.type         << std::endl
+              << hCh.Yscale       << std::endl
+              << hCh.Yoffset      << std::endl
+              << hCh.reserved     << std::endl;
+    std::cout << hEvt.TestWord    << std::endl
+              << hEvt.unixtime    << std::endl
+              << hEvt.reserved    << std::endl;
 
+
+
+    const unsigned int nbByteSmp = hCh.NumByteSamp;
+    const unsigned long int nbSmp = hCh.NumSamp;
+
+    unsigned int nbEvtRead = 0;
+
+    while(!input_file.eof()){
+
+      for(unsigned long int iSmp=0; iSmp<nbSmp; iSmp++){
+
+        Char_t hData[nbByteSmp];
+        input_file.read((char*)&hData, sizeof(nbByteSmp));
+
+        // if(iSmp % 16 == 0 ) std::cout << std::endl;
+        //
+        // for(unsigned int iByte=0; iByte<nbByteSmp; iByte++){
+
+        //   if(iByte % 4 == 0 ) std::cout << " ";
+        //   std::cout << hData[iByte];
+
+        // } // END for reading each byte
+
+      } // END for reading each smp
+
+      // std::cout << std::endl;
+      // std::cout << "Evt #" << nbEvtRead << std::endl;
+
+      nbEvtRead++;
+
+    } // END while file reach EOF
 
   }
 
   /////////////////////////
   // ...
 
+  std::cout << std::endl;
   std::cout << "##################" << std::endl;
   std::cout << "Hit Ctrl+C to exit" << std::endl;
   theApp.Run(kTRUE);
@@ -117,4 +154,31 @@ static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::stri
     exit(0);
   }
 
+}
+
+static std::vector<std::string> splitpath( const std::string& str ,
+                                           const std::set<char> delimiters) {
+  std::vector<std::string> result;
+
+  char const* pch = str.c_str();
+  char const* start = pch;
+  for(; *pch; ++pch)
+  {
+    if (delimiters.find(*pch) != delimiters.end())
+    {
+      if (start != pch)
+      {
+        std::string str(start, pch);
+        result.push_back(str);
+      }
+      else
+      {
+        result.push_back("");
+      }
+      start = pch + 1;
+    }
+  }
+  result.push_back(start);
+
+  return result;
 }
