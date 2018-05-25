@@ -2,6 +2,7 @@
 *.txt
 *.dat
 output
+data
 
 ## Exec
 Binary2TTree

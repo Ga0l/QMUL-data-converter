@@ -62,7 +62,6 @@ int main(int argc, char *argv[]) {
       // Creating BINARY data from ASCII data //
       //////////////////////////////////////////
 
-//      const int NumByteSamp = hCh.NumByteSamp;
       UInt_t data;
 
       int iLineRead = 0;

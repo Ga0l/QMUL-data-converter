@@ -16,6 +16,8 @@ int main(int argc, char *argv[]) {
 
   // Parameters define by user
   // ...
+  UChar_t typeUInt[32]  = "int";
+  UChar_t typeUChar[32] = "unsigned char";
 
   // Nb files processed
   int nFiles = 0;
@@ -34,14 +36,10 @@ int main(int argc, char *argv[]) {
 
     // TESTS
     std::ifstream input_file(sources[iFile], std::ios::binary);
-    oscheader_global hGlobal;
-    oscheader_ch     hCh;
-    oscheader_event  hEvt;
-    input_file.read((char*)&hGlobal, sizeof(hGlobal));
-    input_file.read((char*)&hCh,     sizeof(hCh));
-    input_file.read((char*)&hEvt,    sizeof(hEvt));
 
-    // Debug printouts
+    oscheader_global hGlobal;
+    input_file.read(reinterpret_cast<char *>(&hGlobal), sizeof(hGlobal));
+
     std::cout << hGlobal.TestWord << std::endl
               << hGlobal.Version  << std::endl
               << hGlobal.InstID   << std::endl
@@ -49,46 +47,79 @@ int main(int argc, char *argv[]) {
               << hGlobal.TimeStep << std::endl
               << hGlobal.SampRate << std::endl
               << hGlobal.reserved << std::endl;
-    std::cout << hCh.TestWord     << std::endl
-              << hCh.NumSamp      << std::endl
-              << hCh.NumByteSamp  << std::endl
-              << hCh.NumBitSamp   << std::endl
-              << hCh.type         << std::endl
-              << hCh.Yscale       << std::endl
-              << hCh.Yoffset      << std::endl
-              << hCh.reserved     << std::endl;
-    std::cout << hEvt.TestWord    << std::endl
-              << hEvt.unixtime    << std::endl
-              << hEvt.reserved    << std::endl;
 
+    oscheader_ch bufCh;
 
+    const unsigned int nbCh = hGlobal.NumCh;
+    oscheader_ch hCh[nbCh];
 
-    const unsigned int nbByteSmp = hCh.NumByteSamp;
-    const unsigned long int nbSmp = hCh.NumSamp;
+    for(unsigned int iCh = 0; iCh< nbCh; iCh++) {
+
+      input_file.read(reinterpret_cast<char *>(&bufCh), sizeof(bufCh));
+
+      std::cout << bufCh.TestWord << std::endl
+                << bufCh.NumSamp << std::endl
+                << bufCh.NumByteSamp << std::endl
+                << bufCh.NumBitSamp << std::endl
+                << bufCh.type << std::endl
+                << bufCh.Yscale << std::endl
+                << bufCh.Yoffset << std::endl
+                << bufCh.reserved << std::endl;
+
+      hCh[iCh] = bufCh;
+
+    }
+
+    oscheader_event hEvt;
 
     unsigned int nbEvtRead = 0;
 
     while(!input_file.eof()){
 
-      for(unsigned long int iSmp=0; iSmp<nbSmp; iSmp++){
+      std::cout << "Reading event #" << nbEvtRead << std::endl;
 
-        Char_t hData[nbByteSmp];
-        input_file.read((char*)&hData, sizeof(nbByteSmp));
+      input_file.read(reinterpret_cast<char *>(&hEvt), sizeof(hEvt));
 
-        // if(iSmp % 16 == 0 ) std::cout << std::endl;
-        //
-        // for(unsigned int iByte=0; iByte<nbByteSmp; iByte++){
+      std::cout << hEvt.TestWord << std::endl
+                << hEvt.unixtime << std::endl
+                << hEvt.reserved << std::endl;
 
-        //   if(iByte % 4 == 0 ) std::cout << " ";
-        //   std::cout << hData[iByte];
+      for(unsigned int iCh = 0; iCh < nbCh; iCh++) {
 
-        // } // END for reading each byte
+//        if(memcmp(hCh[iCh].type, typeUInt, 32)){
+//
+//          UInt_t iData;
+//          for(unsigned int iSmp = 0; iSmp<hCh[iCh].NumSamp; iSmp++) {
+//
+//            input_file.read(reinterpret_cast<char *>(&iData), sizeof(iData));
+//            std::cout << iData << " ";
+//            if (iSmp % 4 == 3) std::cout << std::endl;
+//          }
+//
+//        } else if (memcmp(hCh[iCh].type, typeUChar, 32)){
 
-      } // END for reading each smp
+        std::cout << memcmp(hCh[iCh].type, typeUChar, 32) << std::endl;
+        UChar_t cData[hCh[iCh].NumByteSamp];
+        for (unsigned int iSmp = 0; iSmp < hCh[iCh].NumSamp; iSmp++) {
 
-      // std::cout << std::endl;
-      // std::cout << "Evt #" << nbEvtRead << std::endl;
+          input_file.read(reinterpret_cast<char *>(cData), sizeof(cData));
 
+          for (unsigned int ichar = 0; ichar < hCh[iCh].NumByteSamp; ichar++){
+            std::cout << std::dec << std::setw(4) << (UInt_t)cData[ichar] << " ";
+          }
+
+//          std::cout << (UInt_t)cData << std::endl;
+//          if (iSmp % 4 == 3) std::cout << std::endl;
+        }
+
+//        } else {
+//          std::cout << "SMP TYPE NOT RECOGNIZE.... Specifiy if samples are int, char, ... " << std::endl;
+//          exit(0);
+//        }
+
+      } // END loop on Ch
+
+      std::cout << std::endl;
       nbEvtRead++;
 
     } // END while file reach EOF

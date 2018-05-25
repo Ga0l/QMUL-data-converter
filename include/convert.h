@@ -31,7 +31,7 @@ typedef struct {
   UInt_t NumSamp; //, 32-bit
   UInt_t NumByteSamp; //, size
   UInt_t NumBitSamp; //, precision
-  Char_t type[32];//256 bytes
+  Char_t type[32];//32 bytes
   Float_t Yscale; //[volts per LSB], 32-bit
   Float_t Yoffset; //[volts], 32-bit
   Char_t reserved[256];//256 bytes
