@@ -50,7 +50,6 @@ int main(int argc, char *argv[]) {
 
     file.write((char*)&hGlobal, sizeof(oscheader_global));
     file.write((char*)&hCh,     sizeof(oscheader_ch));
-    file.write((char*)&hEvt,    sizeof(oscheader_event));
 
     // Parameter to read line from input data file
     std::string line;
@@ -63,8 +62,8 @@ int main(int argc, char *argv[]) {
       // Creating BINARY data from ASCII data //
       //////////////////////////////////////////
 
-      const int NumByteSamp = hCh.NumByteSamp;
-      UChar_t data[NumByteSamp];
+//      const int NumByteSamp = hCh.NumByteSamp;
+      UInt_t data;
 
       int iLineRead = 0;
 
@@ -76,10 +75,14 @@ int main(int argc, char *argv[]) {
 
         while (test >> var) {
 
-          if (var == "Channel" || var.empty()) break;
-          strncpy(reinterpret_cast<char *>(data), var.c_str(), sizeof(data));
+          if (var == "Channel" || var.empty()){
+            file.write((char*)&hEvt,sizeof(oscheader_event));
+            break;
+          }
 
-          file.write(reinterpret_cast<char *>(data), sizeof(data));
+          data = static_cast<UInt_t>(std::stoul(var));
+          file.write(reinterpret_cast<const char *>(&data), sizeof(UInt_t));
+
         }
 
         iLineRead++;

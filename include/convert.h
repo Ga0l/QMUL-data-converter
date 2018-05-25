@@ -27,7 +27,7 @@ typedef struct {
 //Channel header
 typedef struct {
   UInt_t TestWord; //, 32-bit
-  Char_t name[16];//256 bytes
+  Char_t name[16];//16 bytes
   UInt_t NumSamp; //, 32-bit
   UInt_t NumByteSamp; //, size
   UInt_t NumBitSamp; //, precision
@@ -41,13 +41,8 @@ typedef struct {
 typedef struct {
   UInt_t TestWord;//4 bytes
   Double_t unixtime; //[s], 32-bit
-  Char_t reserved[32];//256 bytes
+  Char_t reserved[32];//32 bytes
 } oscheader_event;
-
-//Data buffer
-typedef struct {
-  UChar_t data; //8-bit
-} osc_data;
 
 #pragma pack(pop)
 
