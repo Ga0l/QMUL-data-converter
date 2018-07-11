@@ -4,20 +4,39 @@
 #include <set>
 
 #include <TApplication.h>
+#include <TFile.h>
+#include <TTree.h>
 
 #include <convert.h>
+
+#ifndef PRINTDATA
+// #define PRINTDATA
+#endif
+
+#define MAXNUMCH 32 // MAX nb of Channels recorded on data
 
 static void show_usage(std::string name);
 static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::string>& sources);
 static std::vector<std::string> splitpath( const std::string& str ,
                                            const std::set<char> delimiters);
 
+#define PBSTR "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+#define PBWIDTH 60
+
+void printProgress (double percentage);
+
+int quick_pow10(int n);
+
 int main(int argc, char *argv[]) {
 
   // Parameters define by user
   // ...
-  UChar_t typeUInt[32]  = "int";
-  UChar_t typeUChar[32] = "unsigned char";
+  std::string typeUInt  = "int";
+  std::string typeUChar = "unsigned char";
+
+
+  // File delims
+  std::set<char> delims{'/','.'};
 
   // Nb files processed
   int nFiles = 0;
@@ -29,10 +48,23 @@ int main(int argc, char *argv[]) {
   std::vector<std::string> sources;
   processArgs(&theApp, &nFiles, sources);
 
+  // Create rootfiles and TTree
+  TFile *file;
+  TTree *tree;
+
   // LOOP ON ALL FILES
   /////////////////////////
 
   for(int iFile=0; iFile < nFiles;iFile++) {
+
+    // Create output file and tree
+    std::vector<std::string> parsedFileArg = splitpath(sources[iFile],delims);
+
+    file = new TFile(Form("output/%s.root",parsedFileArg[parsedFileArg.size()-2].c_str()),"RECREATE");
+    std::cout << "Created " << Form("output/%s.root",parsedFileArg[parsedFileArg.size()-2].c_str())
+              << std::endl;
+
+    tree = new TTree("PMTData","PMTData");
 
     // TESTS
     std::ifstream input_file(sources[iFile], std::ios::binary);
@@ -53,6 +85,10 @@ int main(int argc, char *argv[]) {
     const unsigned int nbCh = hGlobal.NumCh;
     oscheader_ch hCh[nbCh];
 
+    std::string typeCh[nbCh];
+    UInt_t numSamp[nbCh];
+    UInt_t numByteSamp[nbCh];
+
     for(unsigned int iCh = 0; iCh< nbCh; iCh++) {
 
       input_file.read(reinterpret_cast<char *>(&bufCh), sizeof(bufCh));
@@ -67,64 +103,68 @@ int main(int argc, char *argv[]) {
                 << bufCh.reserved << std::endl;
 
       hCh[iCh] = bufCh;
-
+      typeCh[iCh] = bufCh.type;
+      numSamp[iCh] = bufCh.NumSamp;
+      numByteSamp[iCh] = bufCh.NumByteSamp;
     }
 
     oscheader_event hEvt;
 
     unsigned int nbEvtRead = 0;
 
-    while(!input_file.eof()){
+    UInt_t *data[MAXNUMCH];
+    for(unsigned int iCh = 0; iCh< nbCh; iCh++) {
+      data[iCh] = new UInt_t[numSamp[iCh]];
+      tree->Branch(Form("DataCh%d",iCh), data[iCh], Form("Data[%d]/i",numSamp[iCh]));
+    }
 
-      std::cout << "Reading event #" << nbEvtRead << std::endl;
+    while(!input_file.eof()){
 
       input_file.read(reinterpret_cast<char *>(&hEvt), sizeof(hEvt));
 
-      std::cout << hEvt.TestWord << std::endl
-                << hEvt.unixtime << std::endl
-                << hEvt.reserved << std::endl;
-
       for(unsigned int iCh = 0; iCh < nbCh; iCh++) {
 
-//        if(memcmp(hCh[iCh].type, typeUInt, 32)){
-//
-//          UInt_t iData;
-//          for(unsigned int iSmp = 0; iSmp<hCh[iCh].NumSamp; iSmp++) {
-//
-//            input_file.read(reinterpret_cast<char *>(&iData), sizeof(iData));
-//            std::cout << iData << " ";
-//            if (iSmp % 4 == 3) std::cout << std::endl;
-//          }
-//
-//        } else if (memcmp(hCh[iCh].type, typeUChar, 32)){
+        for(unsigned int iSmp = 0; iSmp<numSamp[iCh]; iSmp++) {
 
-        std::cout << memcmp(hCh[iCh].type, typeUChar, 32) << std::endl;
-        UChar_t cData[hCh[iCh].NumByteSamp];
-        for (unsigned int iSmp = 0; iSmp < hCh[iCh].NumSamp; iSmp++) {
+          UInt_t iData = 0;
 
-          input_file.read(reinterpret_cast<char *>(cData), sizeof(cData));
+          if(typeCh[iCh] == typeUInt){
 
-          for (unsigned int ichar = 0; ichar < hCh[iCh].NumByteSamp; ichar++){
-            std::cout << std::dec << std::setw(4) << (UInt_t)cData[ichar] << " ";
+            input_file.read(reinterpret_cast<char *>(&iData), sizeof(iData));
+
+          } else if(typeCh[iCh] == typeUChar) {
+
+            UChar_t cData[numByteSamp[iCh]];
+            input_file.read(reinterpret_cast<char *>(cData), sizeof(cData));
+
+            for (unsigned int ichar = 0; ichar < numByteSamp[iCh]; ichar++){
+              iData += (UInt_t)cData[ichar] * quick_pow10(numByteSamp[iCh]-ichar-1);
+            }
+
+          } else {
+
+            std::cout << "SMP TYPE - " << typeCh[iCh]
+                      << " - NOT RECOGNIZE.... Specifiy if samples are int, char, ... "
+                      << std::endl;
+            return -1;
+
           }
 
-//          std::cout << (UInt_t)cData << std::endl;
-//          if (iSmp % 4 == 3) std::cout << std::endl;
-        }
+          data[iCh][iSmp] = iData;
 
-//        } else {
-//          std::cout << "SMP TYPE NOT RECOGNIZE.... Specifiy if samples are int, char, ... " << std::endl;
-//          exit(0);
-//        }
+        } // END loop on smp
 
       } // END loop on Ch
 
-      std::cout << std::endl;
+      tree->Fill();
       nbEvtRead++;
 
     } // END while file reach EOF
 
-  }
+    tree->Write();
+    file->Close();
+
+  } // END loop iFile
 
   /////////////////////////
   // ...
@@ -212,4 +252,22 @@ static std::vector<std::string> splitpath( const std::string& str ,
   result.push_back(start);
 
   return result;
+}
+
+void printProgress (double percentage) {
+  int val = (int) (percentage * 100);
+  int lpad = (int) (percentage * PBWIDTH);
+  int rpad = PBWIDTH - lpad;
+  printf ("\r%3d%% [%.*s%*s]", val, lpad, PBSTR, rpad, "");
+  fflush (stdout);
+}
+
+int quick_pow10(int n) {
+
+  static int pow10[10] = {
+      1, 10, 100, 1000, 10000,
+      100000, 1000000, 10000000, 100000000, 1000000000
+  };
+
+  return pow10[n];
 }

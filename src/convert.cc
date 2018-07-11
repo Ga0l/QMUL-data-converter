@@ -55,7 +55,7 @@ oscheader_ch createHeaderCh(){
 
   hCh.NumBitSamp = 8;
 
-  Char_t Type[256] = "int";
+  Char_t Type[32] = "int";
   std::copy(std::begin(Type),std::end(Type),std::begin(hCh.type));
 
   hCh.Yscale = 1;
