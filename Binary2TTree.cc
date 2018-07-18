@@ -13,8 +13,6 @@
 // #define PRINTDATA
 #endif
 
-#define MAXNUMCH 32 // MAX nb of Channels recorded on data
-
 static void show_usage(std::string name);
 static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::string>& sources);
 static std::vector<std::string> splitpath( const std::string& str ,
@@ -33,7 +31,6 @@ int main(int argc, char *argv[]) {
   // ...
   std::string typeUInt  = "int";
   std::string typeUChar = "unsigned char";
-
 
   // File delims
   std::set<char> delims{'/','.'};
@@ -80,6 +77,11 @@ int main(int argc, char *argv[]) {
               << hGlobal.SampRate << std::endl
               << hGlobal.reserved << std::endl;
 
+    TBranch *branchHeaderGlobal = tree->Branch("GlobalHeader",
+                                               &hGlobal,
+                                               "TestWord/i:Version/i:InstID[256]/B:NumCh/i:TimeStep/D:SampRate/D:reserved[256]/B",
+                                               n_oscheader_global);
+
     oscheader_ch bufCh;
 
     const unsigned int nbCh = hGlobal.NumCh;
@@ -88,6 +90,7 @@ int main(int argc, char *argv[]) {
     std::string typeCh[nbCh];
     UInt_t numSamp[nbCh];
     UInt_t numByteSamp[nbCh];
+    TBranch *branchHeaderCh[nbCh];
 
     for(unsigned int iCh = 0; iCh< nbCh; iCh++) {
 
@@ -106,13 +109,19 @@ int main(int argc, char *argv[]) {
       typeCh[iCh] = bufCh.type;
       numSamp[iCh] = bufCh.NumSamp;
       numByteSamp[iCh] = bufCh.NumByteSamp;
+
+      branchHeaderCh[iCh] = tree->Branch(Form("Ch%dHeader", iCh),
+                                         &branchHeaderCh[iCh],
+                                         "TestWord/i:name[16]/B:NumSamp/i:NumByteSamp/i:NumBitSamp/i:type[32]:Yscale/F:Yoffset/F:reserved[256]/B",
+                                         n_oscheader_ch);
+
     }
 
     oscheader_event hEvt;
 
     unsigned int nbEvtRead = 0;
 
-    UInt_t *data[MAXNUMCH];
+    UInt_t *data[nbCh];
     for(unsigned int iCh = 0; iCh< nbCh; iCh++) {
       data[iCh] = new UInt_t[numSamp[iCh]];
       tree->Branch(Form("DataCh%d",iCh), data[iCh], Form("Data[%d]/i",numSamp[iCh]));
@@ -161,7 +170,6 @@ int main(int argc, char *argv[]) {
 
     } // END while file reach EOF
 
-    tree->Write();
     file->Close();
 
   } // END loop iFile
