@@ -20,12 +20,12 @@ ROOTLIBS   := $(shell root-config --libs) -lSpectrum
 
 ### BOOST
 BOOSTCFLAGS := -I/usr/include/boost/
-BOOSTLIBS   := -lboost_system
+BOOSTLIBS   := -lboost_system -lboost_filesystem
 
 CPPFLAGS  += -I$(ROOTSYS)/include -I$(INCDIR) -I$(HOME)/.local/include $(ROOTCFLAGS)
-# CPPFLAGS  +=  $(BOOSTCFLAGS)
+CPPFLAGS  += $(BOOSTCFLAGS)
 EXTRALIBS  = $(ROOTLIBS)
-# EXTRALIBS += $(BOOSTLIBS)
+EXTRALIBS += $(BOOSTLIBS)
 
 SRCS = $(wildcard $(SRCDIR)/*.cc)
 OBJS = $(subst .cc,.o,$(SRCS))

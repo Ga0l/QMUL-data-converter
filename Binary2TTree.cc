@@ -7,6 +7,8 @@
 #include <TFile.h>
 #include <TTree.h>
 
+#include <boost/filesystem.hpp>
+
 #include <convert.h>
 
 #ifndef PRINTDATA
@@ -15,8 +17,6 @@
 
 static void show_usage(std::string name);
 static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::string>& sources);
-static std::vector<std::string> splitpath( const std::string& str ,
-                                           const std::set<char> delimiters);
 
 #define PBSTR "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
 #define PBWIDTH 60
@@ -32,9 +32,6 @@ int main(int argc, char *argv[]) {
   std::string typeUInt  = "int";
   std::string typeUChar = "unsigned char";
 
-  // File delims
-  std::set<char> delims{'/','.'};
-
   // Nb files processed
   int nFiles = 0;
 
@@ -48,6 +45,7 @@ int main(int argc, char *argv[]) {
   // Create rootfiles and TTree
   TFile *file;
   TTree *tree;
+  TTree *treeHeader;
 
   // LOOP ON ALL FILES
   /////////////////////////
@@ -55,15 +53,18 @@ int main(int argc, char *argv[]) {
   for(int iFile=0; iFile < nFiles;iFile++) {
 
     // Create output file and tree
-    std::vector<std::string> parsedFileArg = splitpath(sources[iFile],delims);
+    boost::filesystem::path p(sources[iFile]);
 
-    file = new TFile(Form("output/%s.root",parsedFileArg[parsedFileArg.size()-2].c_str()),"RECREATE");
-    std::cout << "Created " << Form("output/%s.root",parsedFileArg[parsedFileArg.size()-2].c_str())
-              << std::endl;
+    std::string str;
+    str = p.parent_path().string() + "/" + p.stem().string() + ".root";
+
+    file = new TFile(str.c_str(),"RECREATE");
+    std::cout << "Created " << str.c_str() << std::endl;
 
     tree = new TTree("PMTData","PMTData");
+    treeHeader = new TTree("PMTDataHeader","PMTDataHeader");
 
-    // TESTS
+    // READ
     std::ifstream input_file(sources[iFile], std::ios::binary);
 
     oscheader_global hGlobal;
@@ -77,10 +78,10 @@ int main(int argc, char *argv[]) {
               << hGlobal.SampRate << std::endl
               << hGlobal.reserved << std::endl;
 
-    TBranch *branchHeaderGlobal = tree->Branch("GlobalHeader",
-                                               &hGlobal,
-                                               "TestWord/i:Version/i:InstID[256]/B:NumCh/i:TimeStep/D:SampRate/D:reserved[256]/B",
-                                               n_oscheader_global);
+    treeHeader->Branch("GlobalHeader",
+                       &hGlobal,
+                       "TestWord/i:Version/i:InstID[256]/B:NumCh/i:TimeStep/D:SampRate/D:reserved[256]/B",
+                       n_oscheader_global);
 
     oscheader_ch bufCh;
 
@@ -88,34 +89,30 @@ int main(int argc, char *argv[]) {
     oscheader_ch hCh[nbCh];
 
     std::string typeCh[nbCh];
-    UInt_t numSamp[nbCh];
-    UInt_t numByteSamp[nbCh];
-    TBranch *branchHeaderCh[nbCh];
 
     for(unsigned int iCh = 0; iCh< nbCh; iCh++) {
 
-      input_file.read(reinterpret_cast<char *>(&bufCh), sizeof(bufCh));
+      input_file.read(reinterpret_cast<char *>(&hCh[iCh]), sizeof(hCh[iCh]));
+      typeCh[iCh] = hCh[iCh].type;
 
-      std::cout << bufCh.TestWord << std::endl
-                << bufCh.NumSamp << std::endl
-                << bufCh.NumByteSamp << std::endl
-                << bufCh.NumBitSamp << std::endl
-                << bufCh.type << std::endl
-                << bufCh.Yscale << std::endl
-                << bufCh.Yoffset << std::endl
-                << bufCh.reserved << std::endl;
+      std::cout << hCh[iCh].TestWord << std::endl
+                << hCh[iCh].NumSamp << std::endl
+                << hCh[iCh].NumByteSamp << std::endl
+                << hCh[iCh].NumBitSamp << std::endl
+                << hCh[iCh].type << std::endl
+                << hCh[iCh].Yscale << std::endl
+                << hCh[iCh].Yoffset << std::endl
+                << hCh[iCh].reserved << std::endl;
 
-      hCh[iCh] = bufCh;
-      typeCh[iCh] = bufCh.type;
-      numSamp[iCh] = bufCh.NumSamp;
-      numByteSamp[iCh] = bufCh.NumByteSamp;
-
-      branchHeaderCh[iCh] = tree->Branch(Form("Ch%dHeader", iCh),
-                                         &branchHeaderCh[iCh],
-                                         "TestWord/i:name[16]/B:NumSamp/i:NumByteSamp/i:NumBitSamp/i:type[32]:Yscale/F:Yoffset/F:reserved[256]/B",
-                                         n_oscheader_ch);
+      treeHeader->Branch(Form("Ch%dHeader", iCh),
+                         &hCh[iCh],
+                         "TestWord/i:name[16]/B:NumSamp/i:NumByteSamp/i:NumBitSamp/i:type[32]:Yscale/F:Yoffset/F:reserved[256]/B",
+                         n_oscheader_ch);
 
     }
+
+    treeHeader->Fill();
+    treeHeader->Write();
 
     oscheader_event hEvt;
 
@@ -123,8 +120,8 @@ int main(int argc, char *argv[]) {
 
     UInt_t *data[nbCh];
     for(unsigned int iCh = 0; iCh< nbCh; iCh++) {
-      data[iCh] = new UInt_t[numSamp[iCh]];
-      tree->Branch(Form("DataCh%d",iCh), data[iCh], Form("Data[%d]/i",numSamp[iCh]));
+      data[iCh] = new UInt_t[hCh[iCh].NumSamp];
+      tree->Branch(Form("DataCh%d",iCh), data[iCh], Form("Data[%d]/i",hCh[iCh].NumSamp));
     }
 
     while(!input_file.eof()){
@@ -133,7 +130,7 @@ int main(int argc, char *argv[]) {
 
       for(unsigned int iCh = 0; iCh < nbCh; iCh++) {
 
-        for(unsigned int iSmp = 0; iSmp<numSamp[iCh]; iSmp++) {
+        for(unsigned int iSmp = 0; iSmp<hCh[iCh].NumSamp; iSmp++) {
 
           UInt_t iData = 0;
 
@@ -143,11 +140,11 @@ int main(int argc, char *argv[]) {
 
           } else if(typeCh[iCh] == typeUChar) {
 
-            UChar_t cData[numByteSamp[iCh]];
+            UChar_t cData[hCh[iCh].NumByteSamp];
             input_file.read(reinterpret_cast<char *>(cData), sizeof(cData));
 
-            for (unsigned int ichar = 0; ichar < numByteSamp[iCh]; ichar++){
-              iData += (UInt_t)cData[ichar] * quick_pow10(numByteSamp[iCh]-ichar-1);
+            for (unsigned int ichar = 0; ichar < hCh[iCh].NumByteSamp; ichar++){
+              iData += (UInt_t)cData[ichar] * quick_pow10(hCh[iCh].NumByteSamp-ichar-1);
             }
 
           } else {
@@ -233,33 +230,6 @@ static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::stri
     exit(0);
   }
 
-}
-
-static std::vector<std::string> splitpath( const std::string& str ,
-                                           const std::set<char> delimiters) {
-  std::vector<std::string> result;
-
-  char const* pch = str.c_str();
-  char const* start = pch;
-  for(; *pch; ++pch)
-  {
-    if (delimiters.find(*pch) != delimiters.end())
-    {
-      if (start != pch)
-      {
-        std::string str(start, pch);
-        result.push_back(str);
-      }
-      else
-      {
-        result.push_back("");
-      }
-      start = pch + 1;
-    }
-  }
-  result.push_back(start);
-
-  return result;
 }
 
 void printProgress (double percentage) {
