@@ -4,6 +4,18 @@ This software is designed to convert ASCII data collected from VME SIS6136 at Qu
 to the binary standard designed by Marcin and Nishimura-san.
 There is also an additional software to convert binary data to TTree.
 
+The ROOT file is written in a specific structure. The following table describe the structure of the 2 trees holding the DAQ information and the data per channel :
+
+|PMTDataHeader             | PMTData                     |
+|------------------------  |-----------------------------|
+|TBranch* GlobalHeader     |UInt_t DataChXXX[nbSmp]      |
+|TBranch* ChXXXHeader      |UInt_t DataChXXX[nbSmp]...   |
+|TBranch* ChXXXHeader ...  |
+
+The *ChXXX* value correspond to the channel number. 
+
+A very quick and powerful way to check the data signal inside the PMTData tree can be do as followed insi
+
 To compile :
 
 ```bash
@@ -27,5 +39,5 @@ This will create automatically a file inside an ouput/ directory with the same n
 This will create automatically a file inside an ouput/ directory with the same name + .root.
 Inside that root file it will be one TTree called *PMTData* filled with branches called *DataChX* with *X* the number of the according channel.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzU0NDY3MjE1XX0=
+eyJoaXN0b3J5IjpbLTczMDkxNzYxNV19
 -->
