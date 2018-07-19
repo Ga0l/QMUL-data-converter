@@ -1,5 +1,7 @@
 # QMUL-data-converter
 
+**WARNING** : The software relies on Boost librairies, ROOT li 
+
 This software is designed to convert ASCII data collected from VME SIS3316 at Queen Mary to the binary standard designed by Marcin and Nishimura-san.
 There is also an additional software to convert binary data to TTree.
 
@@ -44,6 +46,6 @@ Inside that root file it will be one TTree called **PMTData** filled with branch
 
 Want to analyze that newly created file ? Have a look at https://github.com/P3tru/PMTAnalysis
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0MzM4MTYxNzgsLTE4OTMzNjY5MDZdfQ
-==
+eyJoaXN0b3J5IjpbMjk0MzIwNjczLC0xNDMzODE2MTc4LC0xOD
+kzMzY2OTA2XX0=
 -->
