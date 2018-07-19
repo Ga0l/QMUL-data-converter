@@ -16,8 +16,9 @@ The *ChXXX* value correspond to the channel number.
 
 A very quick and powerful way to check the data signal inside the PMTData tree can be do as followed inside ROOT CINT interpretor :
 ```bash
-PMTData->Draw("DataCh0:Iteration$", "Entry$==4", "L")
+PMTData->Draw("DataChXXX:Iteration$", "Entry$==YYY", "L")
 ```
+With fairly obviously **DataChXXX** the name of the channel you want to look for 
 
 To compile :
 
@@ -42,5 +43,5 @@ This will create automatically a file inside an ouput/ directory with the same n
 This will create automatically a file inside an ouput/ directory with the same name + .root.
 Inside that root file it will be one TTree called *PMTData* filled with branches called *DataChX* with *X* the number of the according channel.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQwNDQxMDkxNV19
+eyJoaXN0b3J5IjpbNDU0MjQ0NDc1XX0=
 -->
