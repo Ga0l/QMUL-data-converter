@@ -1,6 +1,6 @@
 # QMUL-data-converter
 
-This software is designed to convert ASCII data collected from VME SIS6136 at Queen Mary
+This software is designed to convert ASCII data collected from VME SIS3316 at Queen Mary
 to the binary standard designed by Marcin and Nishimura-san.
 There is also an additional software to convert binary data to TTree.
 
@@ -41,7 +41,9 @@ This will create automatically a file inside an ouput/ directory with the same n
 ./Binary2TTree /path/to/file.dat
 ```
 This will create automatically a file inside an ouput/ directory with the same name + .root.
-Inside that root file it will be one TTree called **PMTData** filled with branches called *DataChX* with *X* the number of the according channel, see above in this docum
+Inside that root file it will be one TTree called **PMTData** filled with branches called *DataChX* with *X* the number of the according channel, see above in this documentation for the structure of the trees.
+
+Want to analyze that newly created file ? Have a look at https://github.com/P3tru/PMTAnalysis
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTY1ODY4NzExOV19
+eyJoaXN0b3J5IjpbLTE2NDMyOTkzMTNdfQ==
 -->
