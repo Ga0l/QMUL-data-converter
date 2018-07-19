@@ -5,7 +5,8 @@ CC  = gcc
 CXX = g++
 
 DEBUG_LEVEL     = -g
-EXTRA_CCFLAGS   = -W -Wall -std=c++11 -Wpadded
+EXTRA_CCFLAGS   = -W -Wall -std=c++11
+# EXTRA_CCFLAGS   += -Wpadded
 CPPFLAGS        = $(DEBUG_LEVEL) $(EXTRA_CCFLAGS)
 CCFLAGS         = $(CPPFLAGS)
 

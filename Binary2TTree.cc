@@ -16,11 +16,13 @@
 #endif
 
 static void show_usage(std::string name);
-static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::string>& sources);
+static void processArgs(TApplication *theApp,
+                        int *nFiles,
+                        std::vector<std::string>& sources,
+                        std::string *outputPath = NULL);
 
 #define PBSTR "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
 #define PBWIDTH 60
-
 void printProgress (double percentage);
 
 int quick_pow10(int n);
@@ -29,6 +31,8 @@ int main(int argc, char *argv[]) {
 
   // Parameters define by user
   // ...
+  std::string outputPath = "0";
+
   std::string typeUInt  = "int";
   std::string typeUChar = "unsigned char";
 
@@ -56,7 +60,8 @@ int main(int argc, char *argv[]) {
     boost::filesystem::path p(sources[iFile]);
 
     std::string str;
-    str = p.parent_path().string() + "/" + p.stem().string() + ".root";
+    if(outputPath != "0") str = outputPath + "/" + p.stem().string() + ".root";
+    else str = p.parent_path().string() + "/" + p.stem().string() + ".root";
 
     file = new TFile(str.c_str(),"RECREATE");
     std::cout << "Created " << str.c_str() << std::endl;
@@ -80,17 +85,14 @@ int main(int argc, char *argv[]) {
 
     treeHeader->Branch("GlobalHeader",
                        &hGlobal,
-                       "TestWord/i:Version/i:InstID[256]/B:NumCh/i:TimeStep/D:SampRate/D:reserved[256]/B",
-                       n_oscheader_global);
-
-    oscheader_ch bufCh;
+                       "TestWord/i:Version/i:InstID[256]/B:NumCh/i:TimeStep/D:SampRate/D:reserved[256]/B");
 
     const unsigned int nbCh = hGlobal.NumCh;
     oscheader_ch hCh[nbCh];
 
     std::string typeCh[nbCh];
 
-    for(unsigned int iCh = 0; iCh< nbCh; iCh++) {
+    for(unsigned int iCh = 0; iCh < nbCh; iCh++) {
 
       input_file.read(reinterpret_cast<char *>(&hCh[iCh]), sizeof(hCh[iCh]));
       typeCh[iCh] = hCh[iCh].type;
@@ -106,8 +108,7 @@ int main(int argc, char *argv[]) {
 
       treeHeader->Branch(Form("Ch%dHeader", iCh),
                          &hCh[iCh],
-                         "TestWord/i:name[16]/B:NumSamp/i:NumByteSamp/i:NumBitSamp/i:type[32]:Yscale/F:Yoffset/F:reserved[256]/B",
-                         n_oscheader_ch);
+                         "TestWord/i:name[16]/B:NumSamp/i:NumByteSamp/i:NumBitSamp/i:type[32]/B:Yscale/F:Yoffset/F:reserved[256]/B");
 
     }
 
@@ -167,6 +168,7 @@ int main(int argc, char *argv[]) {
 
     } // END while file reach EOF
 
+    if(nbCh == 1) tree->Write();
     file->Close();
 
   } // END loop iFile
@@ -193,7 +195,10 @@ static void show_usage(std::string name){
             << std::endl;
 }
 
-static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::string>& sources){
+static void processArgs(TApplication *theApp,
+                        int *nFiles,
+                        std::vector<std::string>& sources,
+                        std::string *outputPath){
 
   // Reading user input parameters
   if (theApp->Argc() < 2) {
@@ -201,15 +206,13 @@ static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::stri
     exit(0);
   }
 
-  std::string outputPath = "0";
-
   for (int i = 1; i < theApp->Argc(); i++) {
     std::string arg = theApp->Argv(i);
     if ((arg == "-h") || (arg == "--help")) {
       show_usage(theApp->Argv(0));
       exit(0);
     } else if ((arg == "-o")) {
-      outputPath = theApp->Argv(++i);
+      *outputPath = theApp->Argv(++i);
     } else {
       if (i + 1 > theApp->Argc() && *nFiles == 0) {
         std::cout << "NO SOURCES PROVIDED !" << std::endl;

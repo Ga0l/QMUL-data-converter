@@ -5,20 +5,21 @@
 
 #include <TApplication.h>
 
+#include <boost/filesystem.hpp>
+
 #include <convert.h>
 
 static void show_usage(std::string name);
-static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::string>& sources);
-static std::vector<std::string> splitpath( const std::string& str ,
-                                           const std::set<char> delimiters);
+static void processArgs(TApplication *theApp,
+                        int *nFiles,
+                        std::vector<std::string>& sources,
+                        std::string *outputPath = NULL);
 
 int main(int argc, char *argv[]) {
 
   // Parameters define by user
   // ...
-
-  // File delims
-  std::set<char> delims{'/','.'};
+  std::string outputPath = "0";
 
   // Nb files processed
   int nFiles = 0;
@@ -28,35 +29,43 @@ int main(int argc, char *argv[]) {
 
   // Process arguments given by user and create list of files
   std::vector<std::string> sources;
-  processArgs(&theApp, &nFiles, sources);
+  processArgs(&theApp, &nFiles, sources, &outputPath);
 
   // LOOP ON ALL FILES
   /////////////////////////
 
   for(int iFile=0; iFile < nFiles;iFile++) {
 
-    std::vector<std::string> parsedFileArg = splitpath(sources[iFile],delims);
-
-    // TESTS
-    std::ofstream file(Form("output/%s.dat",parsedFileArg[parsedFileArg.size()-2].c_str()),
-                       std::ios::binary);
-
-    std::cout << "Created " << Form("%s.dat",parsedFileArg[parsedFileArg.size()-2].c_str())
-              << std::endl;
-
-    oscheader_global hGlobal = createHeaderGlobal();
-    oscheader_ch hCh         = createHeaderCh();
-    oscheader_event hEvt     = createHeaderEvt();
-
-    file.write((char*)&hGlobal, sizeof(oscheader_global));
-    file.write((char*)&hCh,     sizeof(oscheader_ch));
-
     // Parameter to read line from input data file
     std::string line;
     std::ifstream inputFile;
     inputFile.open(sources[iFile].c_str());
 
+    // Create output file
+    boost::filesystem::path p(sources[iFile]);
+
+    std::string str;
+    if(outputPath != "0") str = outputPath + "/" + p.stem().string() + ".dat";
+    else str = p.parent_path().string() + "/" + p.stem().string() + ".dat";
+
+    std::ofstream file(str.c_str(),
+                       std::ios::binary);
+
+    std::cout << "Created " << str.c_str()
+              << std::endl;
+
+    // Create relevant structures
+    oscheader_global hGlobal = createHeaderGlobal();
+    oscheader_ch hCh         = createHeaderCh();
+    oscheader_event hEvt     = createHeaderEvt();
+
+    // Write headers
+    file.write((char*)&hGlobal, sizeof(oscheader_global));
+    file.write((char*)&hCh,     sizeof(oscheader_ch));
+
     if (inputFile.is_open()) {
+
+      std::cout << "Opening : " << sources[iFile].c_str() << std::endl;
 
       //////////////////////////////////////////
       // Creating BINARY data from ASCII data //
@@ -117,7 +126,10 @@ static void show_usage(std::string name){
             << std::endl;
 }
 
-static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::string>& sources){
+static void processArgs(TApplication *theApp,
+                        int *nFiles,
+                        std::vector<std::string>& sources,
+                        std::string *outputPath){
 
   // Reading user input parameters
   if (theApp->Argc() < 2) {
@@ -125,15 +137,13 @@ static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::stri
     exit(0);
   }
 
-  std::string outputPath = "0";
-
   for (int i = 1; i < theApp->Argc(); i++) {
     std::string arg = theApp->Argv(i);
     if ((arg == "-h") || (arg == "--help")) {
       show_usage(theApp->Argv(0));
       exit(0);
     } else if ((arg == "-o")) {
-      outputPath = theApp->Argv(++i);
+      *outputPath = theApp->Argv(++i);
     } else {
       if (i + 1 > theApp->Argc() && *nFiles == 0) {
         std::cout << "NO SOURCES PROVIDED !" << std::endl;
@@ -154,31 +164,4 @@ static void processArgs(TApplication *theApp, int *nFiles, std::vector<std::stri
     exit(0);
   }
 
-}
-
-static std::vector<std::string> splitpath( const std::string& str ,
-                                           const std::set<char> delimiters) {
-  std::vector<std::string> result;
-
-  char const* pch = str.c_str();
-  char const* start = pch;
-  for(; *pch; ++pch)
-  {
-    if (delimiters.find(*pch) != delimiters.end())
-    {
-      if (start != pch)
-      {
-        std::string str(start, pch);
-        result.push_back(str);
-      }
-      else
-      {
-        result.push_back("");
-      }
-      start = pch + 1;
-    }
-  }
-  result.push_back(start);
-
-  return result;
 }
