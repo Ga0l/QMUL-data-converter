@@ -19,7 +19,7 @@ A very quick and powerful way to check the data signal inside the PMTData tree c
 ```bash
 root [0] $ PMTData->Draw("DataChXXX:Iteration$", "Entry$==YYY", "L")
 ```
-With fairly obviously **DataChXXX** the name of the channel you want to look for and XXX its number, and **Entry$==YYY** the entry number YYY you want to look at.
+With fairly obviously **DataChXXX** the name of the channel you want to look for and XXX its number, and **Entry$==YYY** the entry number YYY you want to look at (Cheers to [Ga0l](https://github.com/Ga0l) for poin
 
 To compile :
 
@@ -46,6 +46,6 @@ Inside that root file it will be one TTree called **PMTData** filled with branch
 
 Want to analyze that newly created file ? Have a look at [PMTAnalysis](https://github.com/P3tru/PMTAnalysis)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTQyNTU0NjI4OCwtMzUzOTQ0MTYyLC0xND
-MzODE2MTc4LC0xODkzMzY2OTA2XX0=
+eyJoaXN0b3J5IjpbLTI1NDY0MDg2NywtNDI1NTQ2Mjg4LC0zNT
+M5NDQxNjIsLTE0MzM4MTYxNzgsLTE4OTMzNjY5MDZdfQ==
 -->
