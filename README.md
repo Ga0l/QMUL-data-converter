@@ -44,8 +44,8 @@ This will create automatically a file inside an ouput/ directory with the same n
 This will create automatically a file inside an ouput/ directory with the same name + .root.
 Inside that root file it will be one TTree called **PMTData** filled with branches called *DataChX* with *X* the number of the according channel, see above in this documentation for the structure of the trees.
 
-Want to analyze that newly created file ? Have a look at 
+Want to analyze that newly created file ? Have a look at [PMTAnalysis](https://github.com/P3tru/PMTAnalysis)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDM0MDgyOTg4LC0zNTM5NDQxNjIsLTE0Mz
-M4MTYxNzgsLTE4OTMzNjY5MDZdfQ==
+eyJoaXN0b3J5IjpbLTQyNTU0NjI4OCwtMzUzOTQ0MTYyLC0xND
+MzODE2MTc4LC0xODkzMzY2OTA2XX0=
 -->
