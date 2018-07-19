@@ -15,7 +15,7 @@ The *ChXXX* value correspond to the channel number.
 
 A very quick and powerful way to check the data signal inside the PMTData tree can be do as followed inside ROOT CINT interpretor :
 ```bash
-PMTData->Draw("DataChXXX:Iteration$", "Entry$==YYY", "L")
+root [0] $ PMTData->Draw("DataChXXX:Iteration$", "Entry$==YYY", "L")
 ```
 With fairly obviously **DataChXXX** the name of the channel you want to look for and XXX its number, and **Entry$==YYY** the entry number YYY you want to look at.
 
@@ -44,5 +44,6 @@ Inside that root file it will be one TTree called **PMTData** filled with branch
 
 Want to analyze that newly created file ? Have a look at https://github.com/P3tru/PMTAnalysis
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4OTMzNjY5MDZdfQ==
+eyJoaXN0b3J5IjpbLTE0MzM4MTYxNzgsLTE4OTMzNjY5MDZdfQ
+==
 -->
