@@ -18,7 +18,7 @@ A very quick and powerful way to check the data signal inside the PMTData tree c
 ```bash
 PMTData->Draw("DataChXXX:Iteration$", "Entry$==YYY", "L")
 ```
-With fairly obviously **DataChXXX** the name of the channel you want to look for 
+With fairly obviously **DataChXXX** the name of the channel you want to look for and XXX its number, and **Entry$==YYY** the entry number YYY you want to look at.
 
 To compile :
 
@@ -41,7 +41,7 @@ This will create automatically a file inside an ouput/ directory with the same n
 ./Binary2TTree /path/to/file.dat
 ```
 This will create automatically a file inside an ouput/ directory with the same name + .root.
-Inside that root file it will be one TTree called *PMTData* filled with branches called *DataChX* with *X* the number of the according channel.
+Inside that root file it will be one TTree called **PMTData** filled with branches called *DataChX* with *X* the number of the according channel, see above in this docum
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDU0MjQ0NDc1XX0=
+eyJoaXN0b3J5IjpbLTY1ODY4NzExOV19
 -->
