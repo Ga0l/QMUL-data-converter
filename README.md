@@ -26,3 +26,6 @@ This will create automatically a file inside an ouput/ directory with the same n
 ```
 This will create automatically a file inside an ouput/ directory with the same name + .root.
 Inside that root file it will be one TTree called *PMTData* filled with branches called *DataChX* with *X* the number of the according channel.
+<!--stackedit_data:
+eyJoaXN0b3J5IjpbMzU0NDY3MjE1XX0=
+-->
